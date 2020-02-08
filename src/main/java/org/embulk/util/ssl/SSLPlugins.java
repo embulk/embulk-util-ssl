@@ -1,4 +1,4 @@
-package org.embulk.util.ftp;
+package org.embulk.util.ssl;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;

@@ -1,4 +1,4 @@
-package org.embulk.util.ftp;
+package org.embulk.util.ssl;
 
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
