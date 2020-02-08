@@ -21,11 +21,18 @@ tasks.withType(JavaCompile) {
 }
 
 dependencies {
-    compileOnly "org.embulk:embulk-core:0.9.12"
     compile "org.bouncycastle:bcpkix-jdk15on:1.52"
     testCompile "junit:junit:4.13"
-    testCompile "org.embulk:embulk-core:0.9.12:tests"
-    testCompile "org.embulk:embulk-standards:0.9.12"
+}
+
+javadoc {
+    title = "${project.name} v${project.version}"
+    options {
+        locale = "en_US"
+        encoding = "UTF-8"
+        overview = "src/main/html/overview.html"
+        links "https://docs.oracle.com/javase/8/docs/api/"
+    }
 }
 
 task testsJar(type: Jar, dependsOn: classes) {

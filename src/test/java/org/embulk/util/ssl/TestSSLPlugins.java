@@ -1,18 +1,32 @@
+/*
+ * Copyright 2015 The Embulk project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.embulk.util.ssl;
 
-import com.google.common.io.Resources;
-import org.embulk.EmbulkTestRuntime;
-import org.embulk.util.ftp.SSLPlugins.SSLPluginConfig;
-import org.junit.Before;
-import org.junit.Rule;
+import org.embulk.util.ssl.SSLPlugins.SSLPluginConfig;
 import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.io.UncheckedIOException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
@@ -22,17 +36,12 @@ import static org.junit.Assert.assertThat;
 
 public class TestSSLPlugins
 {
-    private static String FTP_TEST_SSL_TRUSTED_CA_CERT_FILE;
-    private static String FTP_TEST_SSL_TRUSTED_CA_CERT_DATA;
+    private static final String FTP_TEST_SSL_TRUSTED_CA_CERT_FILE;
+    private static final String FTP_TEST_SSL_TRUSTED_CA_CERT_DATA;
 
-    @Rule
-    public EmbulkTestRuntime runtime = new EmbulkTestRuntime();
-
-    @Before
-    public void createResources() throws Exception
-    {
-        FTP_TEST_SSL_TRUSTED_CA_CERT_FILE = Resources.getResource("ftp.crt").getPath();
-        FTP_TEST_SSL_TRUSTED_CA_CERT_DATA = getFileContents(Resources.getResource("ftp.crt").getPath());
+    static {
+        FTP_TEST_SSL_TRUSTED_CA_CERT_FILE = TestSSLPlugins.class.getClassLoader().getResource("ftp.crt").getPath();
+        FTP_TEST_SSL_TRUSTED_CA_CERT_DATA = getFileContents(FTP_TEST_SSL_TRUSTED_CA_CERT_FILE);
     }
 
     @Test
@@ -57,27 +66,24 @@ public class TestSSLPlugins
     @Test
     public void testSslPluginConfigure()
     {
-        PluginTask task = new PluginTask();
-        task.setSslTrustedCaCertFile(FTP_TEST_SSL_TRUSTED_CA_CERT_FILE);
-        SSLPlugins.configure(task); // no error happens
+        // no error happens
+        SSLPlugins.configure(
+                Optional.of(false), false, Optional.of(FTP_TEST_SSL_TRUSTED_CA_CERT_FILE), Optional.empty());
     }
 
     @Test
     public void testSslPluginConfigureWithVerify()
     {
-        PluginTask task = new PluginTask();
-        task.setSslVerify(true);
-        task.setSslTrustedCaCertFile(FTP_TEST_SSL_TRUSTED_CA_CERT_FILE);
-        SSLPlugins.configure(task); // no error happens
+        // no error happens
+        SSLPlugins.configure(
+                Optional.of(true), false, Optional.of(FTP_TEST_SSL_TRUSTED_CA_CERT_FILE), Optional.empty());
     }
 
     @Test
     public void testReadTrustedCertificatesWithFile()
     {
-        PluginTask task = new PluginTask();
-        task.setSslTrustedCaCertFile(FTP_TEST_SSL_TRUSTED_CA_CERT_FILE);
-
-        Optional<List<X509Certificate>> certs = SSLPlugins.readTrustedCertificates(task);
+        Optional<List<X509Certificate>> certs = SSLPlugins.readTrustedCertificatesForTesting(
+                Optional.of(false), false, Optional.of(FTP_TEST_SSL_TRUSTED_CA_CERT_FILE), Optional.empty());
         assertThat(certs.get().size(), is(1));
         X509Certificate cert = certs.get().get(0);
         assertThat(cert.getSerialNumber().toString(), is("17761656583521120896"));
@@ -87,62 +93,15 @@ public class TestSSLPlugins
     @Test
     public void testReadTrustedCertificatesWithData()
     {
-        PluginTask task = new PluginTask();
-        task.setSslTrustedCaCertData(FTP_TEST_SSL_TRUSTED_CA_CERT_DATA);
-
-        Optional<List<X509Certificate>> certs = SSLPlugins.readTrustedCertificates(task);
+        Optional<List<X509Certificate>> certs = SSLPlugins.readTrustedCertificatesForTesting(
+                Optional.of(false), false, Optional.empty(), Optional.of(FTP_TEST_SSL_TRUSTED_CA_CERT_DATA));
         assertThat(certs.get().size(), is(1));
         X509Certificate cert = certs.get().get(0);
         assertThat(cert.getSerialNumber().toString(), is("17761656583521120896"));
         assertThat(cert.getIssuerDN().toString(), is("CN=example.com, OU=Development devision, O=nobody.inc, L=Chiyoda-ku, ST=Tokyo, C=JP"));
     }
 
-    private class PluginTask implements SSLPlugins.SSLPluginTask
-    {
-        private Optional<Boolean> sslVerify = Optional.of(false);
-        private Optional<String> caCertData = Optional.empty();
-        private Optional<String> caCertFile = Optional.empty();
-        @Override
-        public boolean getSslVerifyHostname()
-        {
-            return false;
-        }
-
-        @Override
-        public Optional<Boolean> getSslVerify()
-        {
-            return this.sslVerify;
-        }
-
-        public void setSslVerify(Boolean sslVerify)
-        {
-            this.sslVerify = Optional.of(sslVerify);
-        }
-
-        @Override
-        public Optional<String> getSslTrustedCaCertFile()
-        {
-            return this.caCertFile;
-        }
-
-        public void setSslTrustedCaCertFile(String certFile)
-        {
-            this.caCertFile = Optional.of(certFile);
-        }
-
-        @Override
-        public Optional<String> getSslTrustedCaCertData()
-        {
-            return this.caCertData;
-        }
-
-        public void setSslTrustedCaCertData(String certData)
-        {
-            this.caCertData = Optional.of(certData);
-        }
-    }
-
-    private String getFileContents(String path) throws Exception
+    private static String getFileContents(String path)
     {
         StringBuilder sb = new StringBuilder();
         try (InputStream is = new FileInputStream(new File(path))) {
@@ -153,6 +112,8 @@ public class TestSSLPlugins
                 sb.append(line).append("\n");
                 line = br.readLine();
             }
+        } catch (final IOException ex) {
+            throw new UncheckedIOException(ex);
         }
         return sb.toString();
     }
