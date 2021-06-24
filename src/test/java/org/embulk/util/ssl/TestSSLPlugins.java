@@ -1,8 +1,8 @@
-package org.embulk.util.ftp;
+package org.embulk.util.ssl;
 
 import com.google.common.io.Resources;
 import org.embulk.EmbulkTestRuntime;
-import org.embulk.util.ftp.SSLPlugins.SSLPluginConfig;
+import org.embulk.util.ssl.SSLPlugins.SSLPluginConfig;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
