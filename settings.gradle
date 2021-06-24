@@ -1,3 +1,2 @@
-rootProject.name = 'embulk-input-ftp'
+rootProject.name = 'embulk-util-ssl'
 include 'embulk-util-ftp'
-include 'embulk-input-ftp'
