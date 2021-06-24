@@ -59,6 +59,25 @@ dependencies {
     testImplementation "org.embulk:embulk-api:0.10.31"
 }
 
+javadoc {
+    options {
+        locale = "en_US"
+        encoding = "UTF-8"
+    }
+}
+
+jar {
+    from rootProject.file("LICENSE")
+}
+
+sourcesJar {
+    from rootProject.file("LICENSE")
+}
+
+javadocJar {
+    from rootProject.file("LICENSE")
+}
+
 publishing {
     publications {
         maven(MavenPublication) {
