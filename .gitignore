@@ -1,10 +1,4 @@
 *~
-/pkg/
-/tmp/
-*.gemspec
 .gradle/
-classpath/
 build/
 .idea
-embulk-input-ftp/out/
-embulk-util-ftp/out/
