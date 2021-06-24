@@ -1,4 +1,4 @@
-package org.embulk.util.ftp;
+package org.embulk.util.ssl;
 
 import com.google.common.io.Resources;
 import org.embulk.EmbulkTestRuntime;
