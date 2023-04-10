@@ -151,6 +151,12 @@ public class TestSSLPlugins
         {
             this.caCertData = Optional.of(certData);
         }
+
+        @Override
+        public Optional<SSLPlugins.CryptoPolicy> getCryptoPolicy()
+        {
+            return Optional.empty();
+        }
     }
 
     private String getFileContents(String path) throws Exception

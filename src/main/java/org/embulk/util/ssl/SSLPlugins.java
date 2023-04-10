@@ -19,6 +19,7 @@ package org.embulk.util.ssl;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import org.embulk.config.ConfigException;
 import org.embulk.util.config.Config;
 import org.embulk.util.config.ConfigDefault;
@@ -34,6 +35,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.security.GeneralSecurityException;
 import java.security.KeyManagementException;
+import java.security.Security;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -41,11 +43,13 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SSLPlugins
 {
+    private static final String CRYPTO_POLICY = "crypto.policy";
     // SSLPlugins is only for SSL clients. SSL server implementation is out ouf scope.
     private SSLPlugins()
     {
@@ -68,6 +72,10 @@ public class SSLPlugins
         @Config("ssl_trusted_ca_cert_data")
         @ConfigDefault("null")
         Optional<String> getSslTrustedCaCertData();
+
+        @Config("crypto_policy")
+        @ConfigDefault("null")
+        Optional<CryptoPolicy> getCryptoPolicy();
     }
 
     private static enum VerifyMode
@@ -75,6 +83,22 @@ public class SSLPlugins
         NO_VERIFY,
         CERTIFICATES,
         JVM_DEFAULT;
+    }
+
+    public enum CryptoPolicy {
+        LIMITED,
+        UNLIMITED;
+        @JsonCreator
+        public static CryptoPolicy of(String value)
+        {
+            return CryptoPolicy.valueOf(value.toUpperCase());
+        }
+        @Override
+        @JsonValue
+        public String toString()
+        {
+            return name().toLowerCase(Locale.ENGLISH);
+        }
     }
 
     public static class SSLPluginConfig
@@ -172,6 +196,7 @@ public class SSLPlugins
 
     public static SSLPluginConfig configure(SSLPluginTask task, DefaultVerifyMode defaultVerifyMode)
     {
+        task.getCryptoPolicy().ifPresent(policy -> Security.setProperty(CRYPTO_POLICY, policy.toString()));
         boolean verify = task.getSslVerify().orElse(defaultVerifyMode != DefaultVerifyMode.NO_VERIFY);
         if (verify) {
             Optional<List<X509Certificate>> certs = readTrustedCertificates(task);
