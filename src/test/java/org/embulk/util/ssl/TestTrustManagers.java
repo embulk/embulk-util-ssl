@@ -17,40 +17,35 @@
 package org.embulk.util.ssl;
 
 import com.google.common.io.Resources;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.StringReader;
 import java.security.cert.X509Certificate;
 import java.util.List;
+import org.junit.Before;
+import org.junit.Test;
 
-public class TestTrustManagers
-{
+public class TestTrustManagers {
     private static String FTP_TEST_SSL_TRUSTED_CA_CERT_DATA;
 
     @Before
-    public void createResources()
-    {
+    public void createResources() {
         FTP_TEST_SSL_TRUSTED_CA_CERT_DATA = Resources.getResource("ftp.crt").getPath();
     }
 
     @Test
-    public void testNewTrustManager() throws Exception
-    {
+    public void testNewTrustManager() throws Exception {
         StringReader r = new StringReader(FTP_TEST_SSL_TRUSTED_CA_CERT_DATA);
         List<X509Certificate> certs = TrustManagers.readPemEncodedX509Certificates(r);
         TrustManagers.newTrustManager(certs); // no error happens
     }
 
     @Test
-    public void testNewDefaultJavaTrustManager() throws Exception
-    {
+    public void testNewDefaultJavaTrustManager() throws Exception {
         TrustManagers.newDefaultJavaTrustManager(); // no error happens
     }
 
+    @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
     @Test
-    public void testNewSSLSocketFactory() throws Exception
-    {
+    public void testNewSSLSocketFactory() throws Exception {
         TrustManagers.newSSLSocketFactory(null, null, "example.com"); // no error happens
     }
 }

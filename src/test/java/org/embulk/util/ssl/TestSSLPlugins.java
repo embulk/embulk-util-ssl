@@ -16,11 +16,10 @@
 
 package org.embulk.util.ssl;
 
-import com.google.common.io.Resources;
-import org.embulk.util.ssl.SSLPlugins.SSLPluginConfig;
-import org.junit.Before;
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
+import com.google.common.io.Resources;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,25 +29,23 @@ import java.io.StringReader;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
+import org.embulk.util.ssl.SSLPlugins.SSLPluginConfig;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-
-public class TestSSLPlugins
-{
+@SuppressWarnings("checkstyle:AbbreviationAsWordInName")
+public class TestSSLPlugins {
     private static String FTP_TEST_SSL_TRUSTED_CA_CERT_FILE;
     private static String FTP_TEST_SSL_TRUSTED_CA_CERT_DATA;
 
     @Before
-    public void createResources() throws Exception
-    {
+    public void createResources() throws Exception {
         FTP_TEST_SSL_TRUSTED_CA_CERT_FILE = Resources.getResource("ftp.crt").getPath();
         FTP_TEST_SSL_TRUSTED_CA_CERT_DATA = getFileContents(Resources.getResource("ftp.crt").getPath());
     }
 
     @Test
-    public void testNewTrustManager() throws Exception
-    {
+    public void testNewTrustManager() throws Exception {
         StringReader r = new StringReader(FTP_TEST_SSL_TRUSTED_CA_CERT_DATA);
         List<X509Certificate> certs = TrustManagers.readPemEncodedX509Certificates(r);
         SSLPluginConfig config = new SSLPluginConfig(certs, false);
@@ -56,8 +53,7 @@ public class TestSSLPlugins
     }
 
     @Test
-    public void testNewSSLSocketFactory() throws Exception
-    {
+    public void testNewSSLSocketFactory() throws Exception {
         StringReader r = new StringReader(FTP_TEST_SSL_TRUSTED_CA_CERT_DATA);
         List<X509Certificate> certs = TrustManagers.readPemEncodedX509Certificates(r);
         SSLPluginConfig config = new SSLPluginConfig(certs, false);
@@ -66,16 +62,14 @@ public class TestSSLPlugins
     }
 
     @Test
-    public void testSslPluginConfigure()
-    {
+    public void testSslPluginConfigure() {
         PluginTask task = new PluginTask();
         task.setSslTrustedCaCertFile(FTP_TEST_SSL_TRUSTED_CA_CERT_FILE);
         SSLPlugins.configure(task); // no error happens
     }
 
     @Test
-    public void testSslPluginConfigureWithVerify()
-    {
+    public void testSslPluginConfigureWithVerify() {
         PluginTask task = new PluginTask();
         task.setSslVerify(true);
         task.setSslTrustedCaCertFile(FTP_TEST_SSL_TRUSTED_CA_CERT_FILE);
@@ -83,8 +77,7 @@ public class TestSSLPlugins
     }
 
     @Test
-    public void testReadTrustedCertificatesWithFile()
-    {
+    public void testReadTrustedCertificatesWithFile() {
         PluginTask task = new PluginTask();
         task.setSslTrustedCaCertFile(FTP_TEST_SSL_TRUSTED_CA_CERT_FILE);
 
@@ -96,8 +89,7 @@ public class TestSSLPlugins
     }
 
     @Test
-    public void testReadTrustedCertificatesWithData()
-    {
+    public void testReadTrustedCertificatesWithData() {
         PluginTask task = new PluginTask();
         task.setSslTrustedCaCertData(FTP_TEST_SSL_TRUSTED_CA_CERT_DATA);
 
@@ -108,53 +100,45 @@ public class TestSSLPlugins
         assertThat(cert.getIssuerDN().toString(), is("CN=example.com, OU=Development devision, O=nobody.inc, L=Chiyoda-ku, ST=Tokyo, C=JP"));
     }
 
-    private class PluginTask implements SSLPlugins.SSLPluginTask
-    {
+    private class PluginTask implements SSLPlugins.SSLPluginTask {
         private Optional<Boolean> sslVerify = Optional.of(false);
         private Optional<String> caCertData = Optional.empty();
         private Optional<String> caCertFile = Optional.empty();
+
         @Override
-        public boolean getSslVerifyHostname()
-        {
+        public boolean getSslVerifyHostname() {
             return false;
         }
 
         @Override
-        public Optional<Boolean> getSslVerify()
-        {
+        public Optional<Boolean> getSslVerify() {
             return this.sslVerify;
         }
 
-        public void setSslVerify(Boolean sslVerify)
-        {
+        public void setSslVerify(final Boolean sslVerify) {
             this.sslVerify = Optional.of(sslVerify);
         }
 
         @Override
-        public Optional<String> getSslTrustedCaCertFile()
-        {
+        public Optional<String> getSslTrustedCaCertFile() {
             return this.caCertFile;
         }
 
-        public void setSslTrustedCaCertFile(String certFile)
-        {
+        public void setSslTrustedCaCertFile(final String certFile) {
             this.caCertFile = Optional.of(certFile);
         }
 
         @Override
-        public Optional<String> getSslTrustedCaCertData()
-        {
+        public Optional<String> getSslTrustedCaCertData() {
             return this.caCertData;
         }
 
-        public void setSslTrustedCaCertData(String certData)
-        {
+        public void setSslTrustedCaCertData(final String certData) {
             this.caCertData = Optional.of(certData);
         }
     }
 
-    private String getFileContents(String path) throws Exception
-    {
+    private String getFileContents(final String path) throws Exception {
         StringBuilder sb = new StringBuilder();
         try (InputStream is = new FileInputStream(new File(path))) {
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
